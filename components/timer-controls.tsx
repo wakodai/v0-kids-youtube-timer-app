@@ -13,44 +13,52 @@ import { playClickSound, playResetSound } from "@/lib/audio"
 
 interface TimerControlsProps {
   isRunning: boolean
-  selectedMinutes: number
+  selectedDuration: number // in seconds
   onTogglePlay: () => void
   onReset: () => void
-  onSelectMinutes: (minutes: number) => void
+  onSelectDuration: (seconds: number) => void
   disabled?: boolean
 }
 
+// Duration options: 1 second (for testing) + 1-30 minutes
+const DURATION_OPTIONS: { label: string; value: number }[] = [
+  { label: "1 sec", value: 1 },
+  ...Array.from({ length: 30 }, (_, i) => ({
+    label: `${i + 1} min`,
+    value: (i + 1) * 60,
+  })),
+]
+
 export function TimerControls({
   isRunning,
-  selectedMinutes,
+  selectedDuration,
   onTogglePlay,
   onReset,
-  onSelectMinutes,
+  onSelectDuration,
   disabled,
 }: TimerControlsProps) {
-  const minuteOptions = Array.from({ length: 30 }, (_, i) => i + 1)
 
   return (
     <div className="flex items-center justify-center gap-3 sm:gap-4">
       {/* Duration selector */}
       <Select
-        value={String(selectedMinutes)}
+        value={String(selectedDuration)}
         onValueChange={(val) => {
           playClickSound()
-          onSelectMinutes(Number(val))
+          onSelectDuration(Number(val))
         }}
         disabled={isRunning}
       >
         <SelectTrigger
           className="w-24 sm:w-28 h-12 sm:h-14 text-base sm:text-lg font-medium bg-card text-card-foreground border-border"
-          aria-label="Select timer duration in minutes"
+          aria-label="Select timer duration"
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-60">
-          {minuteOptions.map((min) => (
-            <SelectItem key={min} value={String(min)}>
-              {min} min
+          {DURATION_OPTIONS.map((opt) => (
+            <SelectItem key={opt.value} value={String(opt.value)}>
+              {opt.label}
             </SelectItem>
           ))}
         </SelectContent>

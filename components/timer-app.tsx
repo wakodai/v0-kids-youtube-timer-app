@@ -9,7 +9,7 @@ import { playAlarmSound, playClickSound, initAudio } from "@/lib/audio"
 const MAX_MEDALS = 3
 
 export function TimerApp() {
-  const [selectedMinutes, setSelectedMinutes] = useState(15)
+  const [selectedDuration, setSelectedDuration] = useState(15 * 60) // in seconds
   const [timeRemaining, setTimeRemaining] = useState(15 * 60)
   const [isRunning, setIsRunning] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
@@ -18,7 +18,7 @@ export function TimerApp() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const midnightRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const totalSeconds = selectedMinutes * 60
+  const totalSeconds = selectedDuration
   const percentage = (timeRemaining / totalSeconds) * 100
   const allMedalsConsumed = consumedMedals >= MAX_MEDALS
 
@@ -43,7 +43,7 @@ export function TimerApp() {
         setIsRunning(false)
         setIsComplete(false)
         setConsumedMedals(0)
-        setTimeRemaining(selectedMinutes * 60)
+        setTimeRemaining(selectedDuration)
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
           intervalRef.current = null
@@ -60,7 +60,7 @@ export function TimerApp() {
         clearTimeout(midnightRef.current)
       }
     }
-  }, [selectedMinutes])
+  }, [selectedDuration])
 
   // Timer countdown logic
   useEffect(() => {
@@ -101,19 +101,19 @@ export function TimerApp() {
     handleFirstInteraction()
     setIsRunning(false)
     setIsComplete(false)
-    setTimeRemaining(selectedMinutes * 60)
+    setTimeRemaining(selectedDuration)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
-  }, [selectedMinutes, handleFirstInteraction])
+  }, [selectedDuration, handleFirstInteraction])
 
-  const handleSelectMinutes = useCallback(
-    (minutes: number) => {
+  const handleSelectDuration = useCallback(
+    (seconds: number) => {
       handleFirstInteraction()
       if (allMedalsConsumed) return
-      setSelectedMinutes(minutes)
-      setTimeRemaining(minutes * 60)
+      setSelectedDuration(seconds)
+      setTimeRemaining(seconds)
       setIsRunning(false)
       setIsComplete(false)
     },
@@ -125,7 +125,7 @@ export function TimerApp() {
     setIsRunning(false)
     setIsComplete(false)
     setConsumedMedals(0)
-    setSelectedMinutes(15)
+    setSelectedDuration(15 * 60)
     setTimeRemaining(15 * 60)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
@@ -147,10 +147,10 @@ export function TimerApp() {
         {/* Controls */}
         <TimerControls
           isRunning={isRunning}
-          selectedMinutes={selectedMinutes}
+          selectedDuration={selectedDuration}
           onTogglePlay={handleTogglePlay}
           onReset={handleReset}
-          onSelectMinutes={handleSelectMinutes}
+          onSelectDuration={handleSelectDuration}
           disabled={isComplete || allMedalsConsumed}
         />
 
@@ -164,13 +164,13 @@ export function TimerApp() {
 
         {/* Medal display - 3 medals */}
         <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
+          <div className="flex items-center justify-center gap-3 sm:gap-5">
             {Array.from({ length: MAX_MEDALS }, (_, i) => (
               <Medal
                 key={i}
                 index={i + 1}
                 consumed={i < consumedMedals}
-                className="w-20 h-24 sm:w-24 sm:h-28"
+                className="w-28 h-32 sm:w-32 sm:h-36"
               />
             ))}
           </div>
