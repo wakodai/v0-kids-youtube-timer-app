@@ -39,56 +39,60 @@ export function playClickSound() {
 
 export function playAlarmSound() {
   try {
-    const ctx = getAudioContext()
-    const now = ctx.currentTime
+    // Play the chime 3 times with spacing
+    for (let round = 0; round < 3; round++) {
+      setTimeout(() => {
+        try {
+          const ctx = getAudioContext()
+          const now = ctx.currentTime
 
-    // Play a pleasant three-tone chime
-    const frequencies = [523.25, 659.25, 783.99] // C5, E5, G5
-    
-    frequencies.forEach((freq, i) => {
-      const oscillator = ctx.createOscillator()
-      const gainNode = ctx.createGain()
+          // Pleasant ascending chime: C5, E5, G5
+          const frequencies = [523.25, 659.25, 783.99]
+          frequencies.forEach((freq, i) => {
+            const oscillator = ctx.createOscillator()
+            const gainNode = ctx.createGain()
 
-      oscillator.connect(gainNode)
-      gainNode.connect(ctx.destination)
+            oscillator.connect(gainNode)
+            gainNode.connect(ctx.destination)
 
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(freq, now)
+            oscillator.type = 'sine'
+            oscillator.frequency.setValueAtTime(freq, now)
 
-      const startTime = now + i * 0.2
-      gainNode.gain.setValueAtTime(0, startTime)
-      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6)
+            const startTime = now + i * 0.2
+            gainNode.gain.setValueAtTime(0, startTime)
+            gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6)
 
-      oscillator.start(startTime)
-      oscillator.stop(startTime + 0.6)
-    })
+            oscillator.start(startTime)
+            oscillator.stop(startTime + 0.6)
+          })
 
-    // Second round with slightly different timing for a richer sound
-    setTimeout(() => {
-      const ctx2 = getAudioContext()
-      const now2 = ctx2.currentTime
-      const frequencies2 = [659.25, 783.99, 1046.5] // E5, G5, C6
+          // Higher resolution chime: E5, G5, C6
+          const later = now + 0.7
+          const frequencies2 = [659.25, 783.99, 1046.5]
+          frequencies2.forEach((freq, i) => {
+            const oscillator = ctx.createOscillator()
+            const gainNode = ctx.createGain()
 
-      frequencies2.forEach((freq, i) => {
-        const oscillator = ctx2.createOscillator()
-        const gainNode = ctx2.createGain()
+            oscillator.connect(gainNode)
+            gainNode.connect(ctx.destination)
 
-        oscillator.connect(gainNode)
-        gainNode.connect(ctx2.destination)
+            oscillator.type = 'sine'
+            oscillator.frequency.setValueAtTime(freq, later)
 
-        oscillator.type = 'sine'
-        oscillator.frequency.setValueAtTime(freq, now2)
+            const startTime = later + i * 0.2
+            gainNode.gain.setValueAtTime(0, startTime)
+            gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.05)
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8)
 
-        const startTime = now2 + i * 0.2
-        gainNode.gain.setValueAtTime(0, startTime)
-        gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.05)
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8)
-
-        oscillator.start(startTime)
-        oscillator.stop(startTime + 0.8)
-      })
-    }, 800)
+            oscillator.start(startTime)
+            oscillator.stop(startTime + 0.8)
+          })
+        } catch {
+          // Silently fail
+        }
+      }, round * 2000) // 2 second gap between each repetition
+    }
   } catch {
     // Silently fail if audio isn't available
   }

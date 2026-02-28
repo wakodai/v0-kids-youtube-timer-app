@@ -5,6 +5,7 @@ import { TimerControls } from "@/components/timer-controls"
 import { TimerProgress } from "@/components/timer-progress"
 import { Medal } from "@/components/medal"
 import { playAlarmSound, playClickSound, initAudio } from "@/lib/audio"
+import Image from "next/image"
 
 const MAX_MEDALS = 3
 
@@ -68,14 +69,6 @@ export function TimerApp() {
       intervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            setIsRunning(false)
-            setIsComplete(true)
-            setConsumedMedals((c) => Math.min(c + 1, MAX_MEDALS))
-            playAlarmSound()
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current)
-              intervalRef.current = null
-            }
             return 0
           }
           return prev - 1
@@ -84,6 +77,20 @@ export function TimerApp() {
     }
 
     return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [isRunning, timeRemaining])
+
+  // Handle timer completion separately to avoid double-firing
+  useEffect(() => {
+    if (isRunning && timeRemaining === 0) {
+      setIsRunning(false)
+      setIsComplete(true)
+      setConsumedMedals((c) => Math.min(c + 1, MAX_MEDALS))
+      playAlarmSound()
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
@@ -139,10 +146,16 @@ export function TimerApp() {
       onTouchStart={handleFirstInteraction}
     >
       <main className="w-full max-w-lg sm:max-w-xl flex flex-col items-center gap-8 sm:gap-10">
-        {/* App title */}
-        <h1 className="text-lg sm:text-xl font-medium text-muted-foreground tracking-wide uppercase text-balance text-center">
-          Focus Timer
-        </h1>
+        {/* Cute construction vehicle illustration */}
+        <div className="w-32 h-32 sm:w-40 sm:h-40 relative">
+          <Image
+            src="/images/construction-vehicle.jpg"
+            alt="Cute construction vehicle"
+            fill
+            className="object-contain rounded-2xl"
+            priority
+          />
+        </div>
 
         {/* Controls */}
         <TimerControls
