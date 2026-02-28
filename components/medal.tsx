@@ -3,11 +3,13 @@
 import { cn } from "@/lib/utils"
 
 interface MedalProps {
-  earned: boolean
+  consumed: boolean
+  index: number
   className?: string
 }
 
-export function Medal({ earned, className }: MedalProps) {
+export function Medal({ consumed, index, className }: MedalProps) {
+  // Default (consumed=false): bright gold. After timer cycle (consumed=true): grayed out.
   return (
     <div
       className={cn(
@@ -20,7 +22,7 @@ export function Medal({ earned, className }: MedalProps) {
         viewBox="0 0 120 140"
         className={cn(
           "w-full h-full transition-all duration-700",
-          earned ? "drop-shadow-lg" : "drop-shadow-none"
+          consumed ? "drop-shadow-none opacity-40" : "drop-shadow-lg"
         )}
         aria-hidden="true"
       >
@@ -29,7 +31,7 @@ export function Medal({ earned, className }: MedalProps) {
           d="M 40 65 L 25 130 L 45 115 L 55 135 L 55 75"
           className={cn(
             "transition-all duration-700",
-            earned ? "fill-[#dc2626]" : "fill-muted-foreground/20"
+            consumed ? "fill-muted-foreground/20" : "fill-[#dc2626]"
           )}
         />
         {/* Right ribbon */}
@@ -37,7 +39,7 @@ export function Medal({ earned, className }: MedalProps) {
           d="M 80 65 L 95 130 L 75 115 L 65 135 L 65 75"
           className={cn(
             "transition-all duration-700",
-            earned ? "fill-[#dc2626]" : "fill-muted-foreground/20"
+            consumed ? "fill-muted-foreground/20" : "fill-[#dc2626]"
           )}
         />
 
@@ -48,7 +50,7 @@ export function Medal({ earned, className }: MedalProps) {
           r="40"
           className={cn(
             "transition-all duration-700",
-            earned ? "fill-gold" : "fill-muted-foreground/15"
+            consumed ? "fill-muted-foreground/15" : "fill-gold"
           )}
         />
         {/* Medal circle - inner ring */}
@@ -58,7 +60,7 @@ export function Medal({ earned, className }: MedalProps) {
           r="33"
           className={cn(
             "transition-all duration-700",
-            earned ? "fill-gold/80" : "fill-muted-foreground/10"
+            consumed ? "fill-muted-foreground/10" : "fill-gold/80"
           )}
         />
 
@@ -69,7 +71,7 @@ export function Medal({ earned, className }: MedalProps) {
           strokeWidth="1.5"
           className={cn(
             "transition-all duration-700",
-            earned ? "stroke-gold-muted" : "stroke-muted-foreground/15"
+            consumed ? "stroke-muted-foreground/15" : "stroke-gold-muted"
           )}
         />
         {/* Laurel wreath right */}
@@ -79,11 +81,11 @@ export function Medal({ earned, className }: MedalProps) {
           strokeWidth="1.5"
           className={cn(
             "transition-all duration-700",
-            earned ? "stroke-gold-muted" : "stroke-muted-foreground/15"
+            consumed ? "stroke-muted-foreground/15" : "stroke-gold-muted"
           )}
         />
 
-        {/* Number "1" */}
+        {/* Number */}
         <text
           x="60"
           y="58"
@@ -92,10 +94,10 @@ export function Medal({ earned, className }: MedalProps) {
           fontWeight="bold"
           className={cn(
             "transition-all duration-700 font-sans",
-            earned ? "fill-gold-muted" : "fill-muted-foreground/20"
+            consumed ? "fill-muted-foreground/20" : "fill-gold-muted"
           )}
         >
-          1
+          {index}
         </text>
       </svg>
     </div>

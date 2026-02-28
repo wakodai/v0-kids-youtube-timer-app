@@ -6,18 +6,21 @@ import { TimerProgress } from "@/components/timer-progress"
 import { Medal } from "@/components/medal"
 import { playAlarmSound, playClickSound, initAudio } from "@/lib/audio"
 
+const MAX_MEDALS = 3
+
 export function TimerApp() {
   const [selectedMinutes, setSelectedMinutes] = useState(15)
   const [timeRemaining, setTimeRemaining] = useState(15 * 60)
   const [isRunning, setIsRunning] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
-  const [hasEarned, setHasEarned] = useState(false)
+  const [consumedMedals, setConsumedMedals] = useState(0)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const midnightRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const totalSeconds = selectedMinutes * 60
   const percentage = (timeRemaining / totalSeconds) * 100
+  const allMedalsConsumed = consumedMedals >= MAX_MEDALS
 
   // Initialize audio on first user interaction (iOS requirement)
   const handleFirstInteraction = useCallback(() => {
@@ -39,7 +42,7 @@ export function TimerApp() {
         // Reset everything at midnight
         setIsRunning(false)
         setIsComplete(false)
-        setHasEarned(false)
+        setConsumedMedals(0)
         setTimeRemaining(selectedMinutes * 60)
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
@@ -67,7 +70,7 @@ export function TimerApp() {
           if (prev <= 1) {
             setIsRunning(false)
             setIsComplete(true)
-            setHasEarned(true)
+            setConsumedMedals((c) => Math.min(c + 1, MAX_MEDALS))
             playAlarmSound()
             if (intervalRef.current) {
               clearInterval(intervalRef.current)
@@ -90,9 +93,9 @@ export function TimerApp() {
 
   const handleTogglePlay = useCallback(() => {
     handleFirstInteraction()
-    if (isComplete) return
+    if (isComplete || allMedalsConsumed) return
     setIsRunning((prev) => !prev)
-  }, [isComplete, handleFirstInteraction])
+  }, [isComplete, allMedalsConsumed, handleFirstInteraction])
 
   const handleReset = useCallback(() => {
     handleFirstInteraction()
@@ -108,19 +111,20 @@ export function TimerApp() {
   const handleSelectMinutes = useCallback(
     (minutes: number) => {
       handleFirstInteraction()
+      if (allMedalsConsumed) return
       setSelectedMinutes(minutes)
       setTimeRemaining(minutes * 60)
       setIsRunning(false)
       setIsComplete(false)
     },
-    [handleFirstInteraction]
+    [handleFirstInteraction, allMedalsConsumed]
   )
 
   const handleSecretReset = useCallback(() => {
     playClickSound()
     setIsRunning(false)
     setIsComplete(false)
-    setHasEarned(false)
+    setConsumedMedals(0)
     setSelectedMinutes(15)
     setTimeRemaining(15 * 60)
     if (intervalRef.current) {
@@ -147,7 +151,7 @@ export function TimerApp() {
           onTogglePlay={handleTogglePlay}
           onReset={handleReset}
           onSelectMinutes={handleSelectMinutes}
-          disabled={isComplete}
+          disabled={isComplete || allMedalsConsumed}
         />
 
         {/* Progress bar + time display */}
@@ -158,13 +162,24 @@ export function TimerApp() {
           isComplete={isComplete}
         />
 
-        {/* Medal display */}
-        <div className="flex flex-col items-center gap-3">
-          <Medal earned={hasEarned} className="w-28 h-32 sm:w-32 sm:h-36" />
+        {/* Medal display - 3 medals */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            {Array.from({ length: MAX_MEDALS }, (_, i) => (
+              <Medal
+                key={i}
+                index={i + 1}
+                consumed={i < consumedMedals}
+                className="w-20 h-24 sm:w-24 sm:h-28"
+              />
+            ))}
+          </div>
           <p className="text-sm text-muted-foreground text-center">
-            {hasEarned
-              ? "Session complete!"
-              : "Complete a session to earn your medal"}
+            {allMedalsConsumed
+              ? "All sessions used for today. See you tomorrow!"
+              : isComplete
+                ? `Session complete! ${MAX_MEDALS - consumedMedals} remaining today.`
+                : `${MAX_MEDALS - consumedMedals} of ${MAX_MEDALS} sessions remaining today`}
           </p>
         </div>
       </main>
