@@ -138,7 +138,7 @@ export function TimerApp() {
       className="relative min-h-dvh flex flex-col items-center justify-center bg-background px-4 py-8 sm:px-6"
       onTouchStart={handleFirstInteraction}
     >
-      <main className="w-full max-w-md sm:max-w-lg flex flex-col items-center gap-8 sm:gap-10">
+      <main className="w-full max-w-lg sm:max-w-xl flex flex-col items-center gap-8 sm:gap-10">
         {/* App title */}
         <h1 className="text-lg sm:text-xl font-medium text-muted-foreground tracking-wide uppercase text-balance text-center">
           Focus Timer
@@ -164,17 +164,17 @@ export function TimerApp() {
 
         {/* Medal display - 3 medals */}
         <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center gap-3 sm:gap-5">
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
             {Array.from({ length: MAX_MEDALS }, (_, i) => (
               <Medal
                 key={i}
                 index={i + 1}
                 consumed={i < consumedMedals}
-                className="w-28 h-32 sm:w-32 sm:h-36"
+                className="w-[7.5rem] h-[8.5rem] sm:w-44 sm:h-48"
               />
             ))}
           </div>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
             {allMedalsConsumed
               ? "All sessions used for today. See you tomorrow!"
               : isComplete
