@@ -8,20 +8,76 @@ import { playAlarmSound, playClickSound, initAudio } from "@/lib/audio"
 import Image from "next/image"
 
 const MAX_MEDALS = 3
+const STORAGE_KEY = "focus-timer-state"
+
+interface PersistedState {
+  consumedMedals: number
+  selectedDuration: number
+  date: string // YYYY-MM-DD to detect day change
+}
+
+function getTodayString() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function loadState(): PersistedState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as PersistedState
+  } catch {
+    return null
+  }
+}
+
+function saveState(state: PersistedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // Silently fail
+  }
+}
 
 export function TimerApp() {
-  const [selectedDuration, setSelectedDuration] = useState(15 * 60) // in seconds
+  const [selectedDuration, setSelectedDuration] = useState(15 * 60)
   const [timeRemaining, setTimeRemaining] = useState(15 * 60)
   const [isRunning, setIsRunning] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [consumedMedals, setConsumedMedals] = useState(0)
   const [audioInitialized, setAudioInitialized] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const midnightRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const totalSeconds = selectedDuration
   const percentage = (timeRemaining / totalSeconds) * 100
   const allMedalsConsumed = consumedMedals >= MAX_MEDALS
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    const saved = loadState()
+    if (saved) {
+      // If it's a new day, reset consumed medals
+      if (saved.date === getTodayString()) {
+        setConsumedMedals(saved.consumedMedals)
+      } else {
+        setConsumedMedals(0)
+      }
+      setSelectedDuration(saved.selectedDuration)
+      setTimeRemaining(saved.selectedDuration)
+    }
+    setHydrated(true)
+  }, [])
+
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    if (!hydrated) return
+    saveState({
+      consumedMedals,
+      selectedDuration,
+      date: getTodayString(),
+    })
+  }, [consumedMedals, selectedDuration, hydrated])
 
   // Initialize audio on first user interaction (iOS requirement)
   const handleFirstInteraction = useCallback(() => {
@@ -40,7 +96,6 @@ export function TimerApp() {
       const msUntilMidnight = midnight.getTime() - now.getTime()
 
       midnightRef.current = setTimeout(() => {
-        // Reset everything at midnight
         setIsRunning(false)
         setIsComplete(false)
         setConsumedMedals(0)
@@ -49,7 +104,6 @@ export function TimerApp() {
           clearInterval(intervalRef.current)
           intervalRef.current = null
         }
-        // Schedule next midnight
         scheduleMidnightReset()
       }, msUntilMidnight)
     }
@@ -140,12 +194,21 @@ export function TimerApp() {
     }
   }, [])
 
+  // Don't render until hydrated to avoid mismatch
+  if (!hydrated) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-background">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div
       className="relative min-h-dvh flex flex-col items-center justify-center bg-background px-4 py-8 sm:px-6"
       onTouchStart={handleFirstInteraction}
     >
-      <main className="w-full max-w-lg sm:max-w-xl flex flex-col items-center gap-8 sm:gap-10">
+      <main className="w-full max-w-xl sm:max-w-2xl flex flex-col items-center gap-6 sm:gap-8">
         {/* Cute construction vehicle illustration */}
         <div className="w-32 h-32 sm:w-40 sm:h-40 relative">
           <Image
@@ -176,14 +239,14 @@ export function TimerApp() {
         />
 
         {/* Medal display - 3 medals */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center gap-2 sm:gap-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-1 sm:gap-3">
             {Array.from({ length: MAX_MEDALS }, (_, i) => (
               <Medal
                 key={i}
                 index={i + 1}
                 consumed={i < consumedMedals}
-                className="w-[7.5rem] h-[8.5rem] sm:w-44 sm:h-48"
+                className="w-[8.5rem] h-[9.5rem] sm:w-52 sm:h-56"
               />
             ))}
           </div>
