@@ -13,6 +13,7 @@ const STORAGE_KEY = "focus-timer-state"
 interface PersistedState {
   consumedMedals: number
   selectedDuration: number
+  timeRemaining: number
   date: string // YYYY-MM-DD to detect day change
 }
 
@@ -57,14 +58,16 @@ export function TimerApp() {
   useEffect(() => {
     const saved = loadState()
     if (saved) {
-      // If it's a new day, reset consumed medals
+      // If it's a new day, reset consumed medals and timeRemaining
       if (saved.date === getTodayString()) {
         setConsumedMedals(saved.consumedMedals)
+        setSelectedDuration(saved.selectedDuration)
+        setTimeRemaining(saved.timeRemaining ?? saved.selectedDuration)
       } else {
         setConsumedMedals(0)
+        setSelectedDuration(saved.selectedDuration)
+        setTimeRemaining(saved.selectedDuration)
       }
-      setSelectedDuration(saved.selectedDuration)
-      setTimeRemaining(saved.selectedDuration)
     }
     setHydrated(true)
   }, [])
@@ -75,9 +78,10 @@ export function TimerApp() {
     saveState({
       consumedMedals,
       selectedDuration,
+      timeRemaining,
       date: getTodayString(),
     })
-  }, [consumedMedals, selectedDuration, hydrated])
+  }, [consumedMedals, selectedDuration, timeRemaining, hydrated])
 
   // Initialize audio on first user interaction (iOS requirement)
   const handleFirstInteraction = useCallback(() => {
@@ -246,7 +250,7 @@ export function TimerApp() {
                 key={i}
                 index={i + 1}
                 consumed={i < consumedMedals}
-                className="w-[8.5rem] h-[9.5rem] sm:w-52 sm:h-56"
+                className="w-36 h-40 sm:w-52 sm:h-56 md:w-60 md:h-64"
               />
             ))}
           </div>

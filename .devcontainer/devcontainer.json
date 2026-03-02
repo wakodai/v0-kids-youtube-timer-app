@@ -1,0 +1,48 @@
+{
+  "name": "Kids YouTube Timer App",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Install dependencies after container creation
+  "postCreateCommand": "pnpm install",
+
+  // Forward ANTHROPIC_API_KEY from host so Claude Code works
+  "remoteEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+  },
+
+  // Mount host ~/.claude config for Claude Code settings persistence
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
+  ],
+
+  // Forward Next.js dev server
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "typescript.preferences.importModuleSpecifier": "non-relative",
+        "tailwindCSS.experimental.classRegex": [
+          ["cn\\(([^)]*)\\)", "\"([^\"]*)\""]
+        ]
+      }
+    }
+  }
+}

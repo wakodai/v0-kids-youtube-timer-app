@@ -39,7 +39,7 @@ export function TimerControls({
 }: TimerControlsProps) {
 
   return (
-    <div className="flex items-center justify-center gap-3 sm:gap-4">
+    <div className="flex items-center justify-center gap-4 sm:gap-6">
       {/* Duration selector */}
       <Select
         value={String(selectedDuration)}
@@ -50,14 +50,14 @@ export function TimerControls({
         disabled={isRunning}
       >
         <SelectTrigger
-          className="w-24 sm:w-28 h-12 sm:h-14 text-base sm:text-lg font-medium bg-card text-card-foreground border-border"
+          className="w-36 sm:w-44 h-16 sm:h-20 text-2xl sm:text-3xl font-bold bg-card text-card-foreground border-2 border-border rounded-2xl"
           aria-label="Select timer duration"
         >
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="max-h-60">
+        <SelectContent className="max-h-72 text-xl">
           {DURATION_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value} value={String(opt.value)}>
+            <SelectItem key={opt.value} value={String(opt.value)} className="text-xl py-3">
               {opt.label}
             </SelectItem>
           ))}
@@ -68,7 +68,7 @@ export function TimerControls({
       <Button
         variant="default"
         size="icon-lg"
-        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform"
+        className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform"
         onClick={() => {
           playClickSound()
           onTogglePlay()
@@ -77,9 +77,9 @@ export function TimerControls({
         aria-label={isRunning ? "Pause timer" : "Start timer"}
       >
         {isRunning ? (
-          <Pause className="size-5 sm:size-6" />
+          <Pause className="size-9 sm:size-10" />
         ) : (
-          <Play className="size-5 sm:size-6 ml-0.5" />
+          <Play className="size-9 sm:size-10 ml-1" />
         )}
       </Button>
 
@@ -87,14 +87,14 @@ export function TimerControls({
       <Button
         variant="outline"
         size="icon-lg"
-        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-card text-foreground border-border hover:bg-secondary active:scale-95 transition-transform"
+        className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-card text-foreground border-2 border-border hover:bg-secondary active:scale-95 transition-transform"
         onClick={() => {
           playResetSound()
           onReset()
         }}
         aria-label="Reset timer"
       >
-        <RotateCcw className="size-5 sm:size-6" />
+        <RotateCcw className="size-9 sm:size-10" />
       </Button>
     </div>
   )
