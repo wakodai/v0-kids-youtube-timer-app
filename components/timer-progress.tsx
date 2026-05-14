@@ -1,18 +1,13 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { formatTime } from "@/lib/timer-utils"
 
 interface TimerProgressProps {
   percentage: number
   timeRemaining: number
   isRunning: boolean
   isComplete: boolean
-}
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
 }
 
 export function TimerProgress({

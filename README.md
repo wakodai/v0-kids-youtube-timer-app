@@ -25,14 +25,31 @@
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev          # 開発サーバー
+pnpm test         # Vitest でテスト実行
+pnpm lint         # ESLint
+pnpm build        # 静的サイト生成 (out/)
 ```
+
+## デプロイ
+
+`main` ブランチに push すると、GitHub Actions が以下を実行します。
+
+1. `pnpm install` → `pnpm lint` → `pnpm test`
+2. 上記がすべて通った場合のみ `pnpm build`（静的書き出し）
+3. `out/` を GitHub Pages にデプロイ
+
+ワークフロー定義: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+
+公開 URL: `https://<github-user>.github.io/v0-kids-youtube-timer-app/`
+
+> GitHub Pages を初めて有効化する場合は、リポジトリの Settings → Pages → "Source" を "GitHub Actions" に設定してください。
 
 ## 技術スタック
 
-- [Next.js 16](https://nextjs.org/) + React 19
+- [Next.js 16](https://nextjs.org/)（`output: "export"` で静的書き出し）+ React 19
 - TypeScript
 - Tailwind CSS v4
 - shadcn/ui (Radix UI)
 - Web Audio API（外部音声ファイル不使用）
-- Vercel Analytics
+- Vitest + @testing-library/react

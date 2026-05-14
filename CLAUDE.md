@@ -6,11 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm dev       # Start development server
-pnpm build     # Production build
+pnpm build     # Static export (writes to out/)
 pnpm lint      # ESLint
+pnpm test      # Vitest (run once)
+pnpm test:watch # Vitest watch mode
 ```
 
 > Note: `next.config.mjs` has `typescript.ignoreBuildErrors: true`, so TypeScript errors do not fail the build.
+
+## Deployment
+
+GitHub Pages. CI workflow is `.github/workflows/deploy.yml`.
+
+- Trigger: push to `main`
+- Pipeline: install → lint → test → build → upload-pages-artifact → deploy-pages
+- Tests must pass before build & deploy (`needs: test`)
+- `NEXT_PUBLIC_BASE_PATH=/<repo-name>` is injected at build time for project-page hosting
+- `next.config.mjs` uses `output: "export"`; build output lives in `out/`
 
 ## Architecture
 
@@ -36,6 +48,8 @@ app/page.tsx
 
 ### Audio (`lib/audio.ts`)
 Uses Web Audio API (no external files). iOS requires the `AudioContext` to be created/resumed inside a user gesture — `initAudio()` is called on the first `touchStart`/click.
+
+`getAudioStatus()` returns one of `uninitialized | running | suspended | unsupported`. `SoundStatus` (`components/sound-status.tsx`) renders a colored chip the user can tap to play a short test tone and confirm audio is working. This is the workaround for iOS/iPadOS occasionally muting Web Audio output (silent switch, Low Power Mode, background tab, etc.).
 
 ### UI components
 `components/ui/` contains shadcn/ui primitives. Do not modify these directly; add new shadcn components with `pnpm dlx shadcn@latest add <component>`.

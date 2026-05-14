@@ -4,44 +4,21 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { TimerControls } from "@/components/timer-controls"
 import { TimerProgress } from "@/components/timer-progress"
 import { Medal } from "@/components/medal"
+import { SoundStatus } from "@/components/sound-status"
 import { playAlarmSound, playClickSound, initAudio } from "@/lib/audio"
+import {
+  DEFAULT_DURATION,
+  MAX_MEDALS,
+  getTodayString,
+  loadPersistedState,
+  reconcilePersistedState,
+  savePersistedState,
+} from "@/lib/timer-utils"
 import Image from "next/image"
 
-const MAX_MEDALS = 3
-const STORAGE_KEY = "focus-timer-state"
-
-interface PersistedState {
-  consumedMedals: number
-  selectedDuration: number
-  timeRemaining: number
-  date: string // YYYY-MM-DD to detect day change
-}
-
-function getTodayString() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function loadState(): PersistedState | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    return JSON.parse(raw) as PersistedState
-  } catch {
-    return null
-  }
-}
-
-function saveState(state: PersistedState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // Silently fail
-  }
-}
-
 export function TimerApp() {
-  const [selectedDuration, setSelectedDuration] = useState(15 * 60)
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60)
+  const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION)
+  const [timeRemaining, setTimeRemaining] = useState(DEFAULT_DURATION)
   const [isRunning, setIsRunning] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [consumedMedals, setConsumedMedals] = useState(0)
@@ -56,26 +33,18 @@ export function TimerApp() {
 
   // Hydrate from localStorage on mount
   useEffect(() => {
-    const saved = loadState()
-    if (saved) {
-      // If it's a new day, reset consumed medals and timeRemaining
-      if (saved.date === getTodayString()) {
-        setConsumedMedals(saved.consumedMedals)
-        setSelectedDuration(saved.selectedDuration)
-        setTimeRemaining(saved.timeRemaining ?? saved.selectedDuration)
-      } else {
-        setConsumedMedals(0)
-        setSelectedDuration(saved.selectedDuration)
-        setTimeRemaining(saved.selectedDuration)
-      }
-    }
+    const saved = loadPersistedState()
+    const reconciled = reconcilePersistedState(saved)
+    setConsumedMedals(reconciled.consumedMedals)
+    setSelectedDuration(reconciled.selectedDuration)
+    setTimeRemaining(reconciled.timeRemaining)
     setHydrated(true)
   }, [])
 
   // Persist state to localStorage whenever it changes
   useEffect(() => {
     if (!hydrated) return
-    saveState({
+    savePersistedState({
       consumedMedals,
       selectedDuration,
       timeRemaining,
@@ -190,18 +159,20 @@ export function TimerApp() {
     setIsRunning(false)
     setIsComplete(false)
     setConsumedMedals(0)
-    setSelectedDuration(15 * 60)
-    setTimeRemaining(15 * 60)
+    setSelectedDuration(DEFAULT_DURATION)
+    setTimeRemaining(DEFAULT_DURATION)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
   }, [])
 
-  // Don't render until hydrated to avoid mismatch
   if (!hydrated) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background">
+      <div
+        className="min-h-dvh flex items-center justify-center bg-background"
+        data-testid="timer-app-loading"
+      >
         <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       </div>
     )
@@ -211,20 +182,22 @@ export function TimerApp() {
     <div
       className="relative min-h-dvh flex flex-col items-center justify-center bg-background px-4 py-8 sm:px-6"
       onTouchStart={handleFirstInteraction}
+      data-testid="timer-app"
     >
       <main className="w-full max-w-xl sm:max-w-2xl flex flex-col items-center gap-6 sm:gap-8">
-        {/* Cute construction vehicle illustration */}
+        <SoundStatus />
+
         <div className="w-32 h-32 sm:w-40 sm:h-40 relative">
           <Image
-            src="/images/construction-vehicle.jpg"
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/images/construction-vehicle.jpg`}
             alt="Cute construction vehicle"
             fill
             className="object-contain rounded-2xl"
             priority
+            unoptimized
           />
         </div>
 
-        {/* Controls */}
         <TimerControls
           isRunning={isRunning}
           selectedDuration={selectedDuration}
@@ -234,7 +207,6 @@ export function TimerApp() {
           disabled={isComplete || allMedalsConsumed}
         />
 
-        {/* Progress bar + time display */}
         <TimerProgress
           percentage={percentage}
           timeRemaining={timeRemaining}
@@ -242,7 +214,6 @@ export function TimerApp() {
           isComplete={isComplete}
         />
 
-        {/* Medal display - 3 medals */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center justify-center gap-1 sm:gap-3">
             {Array.from({ length: MAX_MEDALS }, (_, i) => (
@@ -254,7 +225,10 @@ export function TimerApp() {
               />
             ))}
           </div>
-          <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
+          <p
+            className="text-base sm:text-lg font-medium text-muted-foreground text-center"
+            data-testid="session-status"
+          >
             {allMedalsConsumed
               ? "All sessions used for today. See you tomorrow!"
               : isComplete
@@ -264,7 +238,6 @@ export function TimerApp() {
         </div>
       </main>
 
-      {/* Secret reset button - bottom right corner, nearly invisible */}
       <button
         onClick={handleSecretReset}
         className="fixed bottom-2 right-2 w-8 h-8 opacity-[0.02] hover:opacity-10 transition-opacity bg-transparent border-none cursor-default focus:outline-none"
