@@ -79,7 +79,25 @@ describe("TimerControls", () => {
     expect(onTogglePlay).not.toHaveBeenCalled()
   })
 
-  it("duration セレクタは現在値を表示する (10 min)", () => {
+  it("プリセットボタン押下で onSelectDuration が呼ばれる (15分 = 900秒)", async () => {
+    const onSelectDuration = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <TimerControls
+        isRunning={false}
+        selectedDuration={600}
+        onTogglePlay={vi.fn()}
+        onReset={vi.fn()}
+        onSelectDuration={onSelectDuration}
+      />
+    )
+    await act(async () => {
+      await user.click(screen.getByLabelText("Set timer to 15分"))
+    })
+    expect(onSelectDuration).toHaveBeenCalledWith(900)
+  })
+
+  it("現在の duration に一致するプリセットは aria-pressed=true になる", () => {
     render(
       <TimerControls
         isRunning={false}
@@ -89,6 +107,44 @@ describe("TimerControls", () => {
         onSelectDuration={vi.fn()}
       />
     )
-    expect(screen.getByLabelText("Select timer duration")).toHaveTextContent("10 min")
+    expect(screen.getByLabelText("Set timer to 10分")).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByLabelText("Set timer to 15分")).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("+1分 ボタンで現在値+60秒、-1分 ボタンで現在値-60秒が渡る", async () => {
+    const onSelectDuration = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <TimerControls
+        isRunning={false}
+        selectedDuration={600}
+        onTogglePlay={vi.fn()}
+        onReset={vi.fn()}
+        onSelectDuration={onSelectDuration}
+      />
+    )
+    await act(async () => {
+      await user.click(screen.getByLabelText("Increase timer by 1 minute"))
+    })
+    expect(onSelectDuration).toHaveBeenLastCalledWith(660)
+    await act(async () => {
+      await user.click(screen.getByLabelText("Decrease timer by 1 minute"))
+    })
+    expect(onSelectDuration).toHaveBeenLastCalledWith(540)
+  })
+
+  it("isRunning=true の時はプリセット・微調整ボタンが無効化される", () => {
+    render(
+      <TimerControls
+        isRunning={true}
+        selectedDuration={600}
+        onTogglePlay={vi.fn()}
+        onReset={vi.fn()}
+        onSelectDuration={vi.fn()}
+      />
+    )
+    expect(screen.getByLabelText("Set timer to 10分")).toBeDisabled()
+    expect(screen.getByLabelText("Increase timer by 1 minute")).toBeDisabled()
+    expect(screen.getByLabelText("Decrease timer by 1 minute")).toBeDisabled()
   })
 })
